@@ -13,7 +13,7 @@ type server struct {
 	UUID string
 }
 
-func (s *server) NewServerSpec() {
+func (s *server) DefaultServerSpec() {
 	s.Name = "iaf-goal-server"
 	s.UUID = "AA6062F098CA42118EC4193EB73CCEB6"
 }
@@ -34,27 +34,30 @@ func New() {
 	onStateChanged := func(d gatt.Device, s gatt.State) {
 		fmt.Printf("State: %s\n", s)
 		switch s {
+		case gatt.StateUnknown:
+			log.Println("unknown")
+		case gatt.StateUnauthorized:
+			log.Println("unauthorized")
 		case gatt.StatePoweredOn:
+			log.Println("powered on")
 
 			s := server{}
-			s.NewServerSpec()
+			s.DefaultServerSpec()
+
 			// Setup GAP and GATT services for Linux implementation.
 			d.AddService(service.NewGapService(s.Name)) // no effect on OS X
 			d.AddService(service.NewGattService())        // no effect on OS X
 
 			// A simple count service for demo.
-			s1 := service.NewCountService()
+			s1 := NewWakeupService()
 			d.AddService(s1)
 
-			// A fake battery service for demo.
-			s2 := service.NewBatteryService()
-			d.AddService(s2)
-
 			// Advertise device name and service's UUIDs.
-			d.AdvertiseNameAndServices(s.Name, []gatt.UUID{s1.UUID(), s2.UUID()})
+			d.AdvertiseNameAndServices(s.Name, []gatt.UUID{s1.UUID()})
 
 			// Advertise as an OpenBeacon iBeacon
 			d.AdvertiseIBeacon(gatt.MustParseUUID(s.UUID), 1, 2, -59)
+
 
 		default:
 		}
