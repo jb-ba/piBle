@@ -15,7 +15,7 @@ type server struct {
 
 func (s *server) DefaultServerSpec() {
 	s.Name = "iaf-goal-server"
-	s.UUID = "AA6062F098CA42118EC4193EB73CCEB6"
+	s.UUID = "6b759a6a-b416-4c89-9433-dcb9cc8c3e57"
 }
 
 func New() {
@@ -34,10 +34,6 @@ func New() {
 	onStateChanged := func(d gatt.Device, s gatt.State) {
 		fmt.Printf("State: %s\n", s)
 		switch s {
-		case gatt.StateUnknown:
-			log.Println("unknown")
-		case gatt.StateUnauthorized:
-			log.Println("unauthorized")
 		case gatt.StatePoweredOn:
 			log.Println("powered on")
 
@@ -49,7 +45,7 @@ func New() {
 			d.AddService(service.NewGattService())        // no effect on OS X
 
 			// A simple count service for demo.
-			s1 := NewWakeupService()
+			s1 := NewBatteryService()
 			d.AddService(s1)
 
 			// Advertise device name and service's UUIDs.

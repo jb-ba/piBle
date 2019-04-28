@@ -14,7 +14,7 @@ func NewWakeupService() *gatt.Service {
 			n++
 		})
 
-	//s.AddCharacteristic(gatt.MustParseUUID("16fe0d80-c111-11e3-b8c8-0002a5d5c51b")).HandleWriteFunc(
+	//s.AddCharacteristic(gatt.MustParseUUID("7b534b61-fb20-4823-8171-ed791ee7694f")).HandleWriteFunc(
 	//	func(r gatt.Request, data []byte) (status byte) {
 	//		log.Println("Wrote:", string(data))
 	//		return gatt.StatusSuccess
