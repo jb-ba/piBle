@@ -48,31 +48,26 @@ func onStateChanged(d gatt.Device, s gatt.State) {
 	}
 }
 
+// OnPeriphDiscovered checks fo peripherals.
+// It returns if a name does not match a predefined name
 func onPeriphDiscovered(p gatt.Peripheral, a *gatt.Advertisement, rssi int) {
-	if strings.ToUpper(p.Name()) != espRed {
-		log.Println("Not ESP. Name is: " + p.Name() + "with id " + p.ID() + " the device name ")
+	log.Println("Discovered device with ID: " + p.ID() + " and name: " + p.Name())
+	if strings.ToUpper(p.Name()) == strings.ToUpper(espRed) || strings.ToUpper(p.Name()) == strings.ToUpper(espBlue) {
+		p.Device().StopScanning()
+		p.Device().Connect(p)
+	} else if strings.ToUpper(p.Name()) == espBlue {
+		p.Device().StopScanning()
+		p.Device().Connect(p)
+	} else {
 		return
 	}
-	log.Println("Discovered ESP with ID: " + p.ID())
-
-	// Stop scanning once we've got the peripheral we're looking for.
-
-	log.Printf("\nPeripheral ID:%s, NAME:(%s)\n", p.ID(), p.Name())
-	log.Println("  Local Name        =", a.LocalName)
-	log.Println("  TX Power Level    =", a.TxPowerLevel)
-	log.Println("  Manufacturer Data =", a.ManufacturerData)
-	log.Println("  Service Data      =", a.ServiceData)
-	log.Println("")
-	log.Println()
-	p.Device().StopScanning()
-
-	p.Device().Connect(p)
 }
 
 func onPeriphConnected(p gatt.Peripheral, err error) {
-	log.Println("Connected")
+	log.Println("Connected to: " + p.Name())
 	defer p.Device().CancelConnection(p)
 
+	// MTU (Maximum Transmission Unit) is the maximum length of an ATT packet.
 	if err := p.SetMTU(500); err != nil {
 		log.Printf("Failed to set MTU, err: %s\n", err)
 	}
@@ -89,7 +84,6 @@ func onPeriphConnected(p gatt.Peripheral, err error) {
 		if len(s.Name()) > 0 {
 			msg += " (" + s.Name() + ")"
 		}
-		log.Println(msg)
 
 		// Discovery characteristics
 		cs, err := p.DiscoverCharacteristics(nil, s)
@@ -104,11 +98,11 @@ func onPeriphConnected(p gatt.Peripheral, err error) {
 			}
 		}
 		for _, c := range cs {
-			msg := "  Characteristic  " + c.UUID().String()
+			msg += "\nCharacteristic:  " + c.UUID().String()
 			if len(c.Name()) > 0 {
 				msg += " (" + c.Name() + ")"
 			}
-			msg += "\n    properties    " + c.Properties().String()
+			msg += "\nProperties:    " + c.Properties().String()
 			log.Println(msg)
 
 			// Read the characteristic, if possible.
@@ -145,7 +139,7 @@ func onPeriphConnected(p gatt.Peripheral, err error) {
 			}
 
 			// Subscribe the characteristic, if possible.
-			if (c.Properties() & (gatt.CharIndicate )) != 0 {
+			if (c.Properties() & (gatt.CharIndicate)) != 0 {
 				f := func(c *gatt.Characteristic, b []byte, err error) {
 					log.Printf("indicated: % X | %q\n", b, b)
 					log.Println(string(b))
