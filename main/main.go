@@ -5,18 +5,23 @@ import (
 	"log"
 	"strings"
 	"time"
+	// "goal"
 
 	"github.com/paypal/gatt"
 	"github.com/paypal/gatt/examples/option"
 )
 
 var (
-	espRed  = "RED_GOAL"
-	espBlue = "BLUE_GOAL"
+	espRed                  = "RED_GOAL"
+	espBlue                 = "BLUE_GOAL"
+	currentDevice           = ""
+	goalServiceUUID         = "298ed54e6b1911e9a9231681be663d3e"
+	goalCharacteristicsUUID = "298ed8d2-6b19-11e9-a923-1681be663d3e"
 )
 
 func main() {
 	log.SetFlags(log.Llongfile)
+	addGoalRed()
 	d, err := gatt.NewDevice(option.DefaultClientOptions...)
 	if err != nil {
 		log.Fatalf("Failed to open device, err: %s\n", err)
@@ -54,6 +59,7 @@ func onStateChanged(d gatt.Device, s gatt.State) {
 func onPeriphDiscovered(p gatt.Peripheral, a *gatt.Advertisement, rssi int) {
 	log.Println("Discovered device with ID: " + p.ID() + " and name: " + p.Name())
 	if strings.ToUpper(p.Name()) == strings.ToUpper(espRed) || strings.ToUpper(p.Name()) == strings.ToUpper(espBlue) {
+		currentDevice = p.Name()
 		p.Device().StopScanning()
 		p.Device().Connect(p)
 	} else if strings.ToUpper(p.Name()) == espBlue {
@@ -80,22 +86,23 @@ func onPeriphConnected(p gatt.Peripheral, err error) {
 		return
 	}
 
-	// Range over discovered services and check if desired service is there (currently no check).
+	// Range over discovered services and check for desired services.
 	for _, s := range ss {
 		msg := "Service: " + s.UUID().String()
 		if len(s.Name()) > 0 {
 			msg += " (" + s.Name() + ")"
 		}
-		
-		
+		log.Println(s.Name())
+		log.Println(s.UUID())
+
 		cs, err := p.DiscoverCharacteristics(nil, s)
 		if err != nil {
 			log.Printf("Failed to discover characteristics, err: %s\n", err)
 			continue
 		}
-		
+
 		// Range over discovered characteristics and check if desired characteristic is there (currently no check).
-		// Currently we check for 
+		// Currently we check for
 		for _, c := range cs {
 			if c.Name() != "" {
 				log.Println(c.Name())
@@ -146,7 +153,7 @@ func onPeriphConnected(p gatt.Peripheral, err error) {
 					log.Printf("indicated: % X | %q\n", b, b)
 					log.Println(string(b))
 					if true {
-						log.Println("writing stugg")
+						log.Println("writing stuff")
 						p.WriteCharacteristic(c, b, true)
 					}
 				}
